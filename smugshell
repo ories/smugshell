@@ -1,0 +1,114 @@
+#!/usr/bin/python
+
+import os
+import cmd
+import readline
+import getpass
+from smugmugalbum import *
+from smugmugcategory import *
+import smugmugglobals
+import smugpy
+
+class SmugConsole(cmd.Cmd):
+  cur_dir = None
+  user = ""
+  password = ""
+  prompt_suffix = "> "
+  prompt = ""
+
+  def __init__(self):
+    cmd.Cmd.__init__(self)
+    self.prompt = self.prompt_suffix
+    self.intro = "Welcome to console"
+
+  # worker & utilities
+  def initialize(self):
+    #initialize all stacks and environments
+
+    smugmugglobals.smugmughandle = smugpy.SmugMug(api_key = smugmugglobals.API_KEY, api_version = "1.2.2", app_name = smugmugglobals.SCRIPT_NAME)
+
+    smugmugglobals.smugmughandle.login_withPassword( EmailAddress=self.user, Password = self.password )
+    self.cur_dir = SmugMugCategory.getAllCategories()
+
+  def dir_content(self, albums):
+    return albums
+
+
+  def set_prompt(self, category, album, subcategory=None):
+    sub = ""
+    if subcategory != None:
+      sub = "/%s" % (subcategory)
+    self.prompt = "%s/%s%s%s" % (category, album, sub, self.prompt_suffix)
+    
+
+  #actual shell functions
+  def do_ls(self, args):
+    if self.cur_dir is None:
+      return
+
+    for album in self.cur_dir:
+      print " %s " % (album.name)
+
+  def do_cd(self, args):
+    self.cur_dir = SmugMugAlbum.
+
+  def do_user(self, args):
+    self.user = args
+
+  def do_password(self, args):
+    self.password = args
+
+  def do_login(self, args):
+    if self.user == "":
+      print "must set user"
+      return
+
+    if self.password == "":
+      print "must set password"
+      return
+  
+    print "User: %s \tPassword: %s" % (self.user, self.password)
+    self.initialize()
+
+  def do_hist(self, args):
+    print self._hist
+
+  def do_exit(self, args):
+    return -1
+
+  def do_EOF(self, args):
+    return self.do_exit(args)
+
+  def do_shell(self, args):
+    os.system(args)
+
+  def preloop(self):
+    cmd.Cmd.preloop(self)
+    self._hist = []
+    self._locals = {}
+    self._globals = {}
+
+  def postloop(self):
+    cmd.Cmd.postloop(self)
+    print "exiting..."
+
+  def precmd(self, line):
+    self._hist += [ line.strip() ]
+    return line
+
+  def postcmd(self, stop, line):
+    return stop
+
+  def emptyline(self):
+    pass
+
+  def default(self, line):
+    try:
+      exec(line) in self._locals, self._globals
+    except Exception, e:
+      print e.__class__, ":", e
+
+
+if __name__ == '__main__':
+  console = SmugConsole()
+  console.cmdloop()

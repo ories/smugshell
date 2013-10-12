@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+from smugmugalbum import *
+from smugmug import *
+
+smug = SmugMug()
+
+a=SmugMugAlbum.create("r")
+
+c=a.create("foo")
+
+list = smug.get_albums()

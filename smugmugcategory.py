@@ -13,42 +13,59 @@ class SmugMugCategory(object):
     self.nicename = ""
     self.type = ""
 
-  def __init__(self, data):
+  def __init__(self, data = None):
     
     self.__pre_init__()
 
-    try: 
-      self.id = data['id']
-      self.name = data['Name']
-    except:
-      raise TypeError("Data does not represent a valid Category:\n\t%s" % data)
+    if data != None:
+      try: 
+        self.id = data['id']
+        self.name = data['Name']
+      except Exception as msg:
+        print msg
+        raise TypeError("Data does not represent a valid Category:\n\t%s" % data)
 
-    keys = data.keys()
+      keys = data.keys()
 
-    if 'NiceName' in keys:
-      self.nicename = data['NiceName']
+      if 'NiceName' in keys:
+        self.nicename = data['NiceName']
 
-    if 'Type' in keys:
-      self.type = data['Type']
+      if 'Type' in keys:
+        self.type = data['Type']
+
+  def initFromName(self, name):
+    ret = False
+
+    categories = impl.SmugMugCategoryAPI().categories_get()
+
+    for category in categories:
+      if category['Name'] == name:
+        self.initFromData( category )
+        ret = True
+        break
+
+    return ret  
+
+  def initFromData( self, data ):
+    self.__init__(data)
 
 
   def __stub__(self, returnlist):
     return returnlist
 
-  @classmethod
-  # returns instance but can also be called from instance - use with care
-  # TODO
-  def create(cls, name, extra_args=None):
+  def create(self, name, extra_args=None):
+    ret = False
     category = impl.SmugMugCategoryAPI().create(name)
 
     if category == None:
-      return None
+      ret = False
     else:
       try:
-        ret = cls(category)
+        self.initFromData(category)
+        ret = True
       except Exception as msg:
         print msg
-        return None
+        ret = False
 
     return ret
 

@@ -16,39 +16,53 @@ class SmugMugAlbum(object):
     self.subcategory = None # class subcategory
     self.title = ""
 
-  def __init__(self, data):
+  def __init__(self, data = None):
     # expecting:
     # { 'id' : 1234, 'Key':'abc', 'Category' : {'id' : 0, 'Name' : 'name'}, 'SubCategory' : {'id' : 0, 'Name' : 'name'}', Title' : 'foo'} 
     self.__pre_init__()
 
-    try: 
-      self.id = data['id']
-      self.key = data['Key']
-      self.category = SmugMugCategory(data['Category'])
-      self.title = data['Title']
-    except Exception as msg:
-      print msg
-      raise TypeError("data does not represent a valid album:\n\t%s" % data)
-
-  def __stub__(self, returnlist):
-    return returnlist
-
-  @classmethod
-  # returns instance but can also be called from instance - use with care
-  # TODO
-  def create( cls, title, category_id = None, subcategory_id = None ):
-    album = impl.SmugMugAlbumAPI().create( title, category_id, subcategory_id )
-
-    if album == None:
-      return None
-    else:
-      try:
-        ret = cls(album)
+    if data != None:
+      try: 
+        self.id = data['id']
+        self.key = data['Key']
+        self.category = SmugMugCategory(data['Category'])
+        self.title = data['Title']
       except Exception as msg:
         print msg
-        return None
+        raise TypeError("data does not represent a valid album:\n\t%s" % data)
+
+  def initFromName(self, name):
+    ret = False
+
+    albums = impl.SmugMugAlbumAPI().albums_get()
+
+    for album in albums:
+      if album['Title'] == name:
+        self.initFromData(album)
+        ret = True
+        break
 
     return ret
+        
+
+  def create( self, title, category_id = None, subcategory_id = None ):
+    album = impl.SmugMugAlbumAPI().create( title, category_id, subcategory_id )
+    ret = False
+
+    if album == None:
+      ret = False
+    else:
+      try:
+        self.initFromData(album)
+        ret = True
+      except Exception as msg:
+        print msg
+        ret = False
+
+    return ret
+
+  def initFromData( self, data ):
+    self.__init__(data)
 
   @classmethod
   def getAllAlbums(self):
@@ -63,7 +77,7 @@ class SmugMugAlbum(object):
 
     return ret_list
     
-  def delete(self, album_id, extra_args=None):
+  def delete(self):
     return impl.SmugMugAlbumAPI().delete(self.id)
 
   def getImages(self):
